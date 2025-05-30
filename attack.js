@@ -2,24 +2,36 @@ const puppeteer = require('puppeteer-extra')
 const StealthPlugin = require('puppeteer-extra-plugin-stealth')
 const AnonymizeUA = require('puppeteer-extra-plugin-anonymize-ua')
 
-// Activamos plugins
 puppeteer.use(StealthPlugin())
 puppeteer.use(AnonymizeUA())
 
 const TARGET_URL = 'http://localhost:3001/phone'
 const NUM_REQUESTS = 10
-
 const visitorIds = new Set()
 
 function randomLang() {
-  return Math.random() > 0.5 ? 'en-US,en;q=0.9' : 'es-AR,es;q=0.9'
+  const languages = [
+    'en-US,en;q=0.9',
+    'es-AR,es;q=0.9',
+    'pt-BR,pt;q=0.9',
+    'fr-FR,fr;q=0.9',
+    'de-DE,de;q=0.9',
+    'it-IT,it;q=0.9',
+    'ja-JP,ja;q=0.9',
+    'zh-CN,zh;q=0.9',
+    'ru-RU,ru;q=0.9',
+    'ko-KR,ko;q=0.9'
+  ]
+  return languages[Math.floor(Math.random() * languages.length)]
 }
 
 function randomUA() {
   const base = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
-    'Mozilla/5.0 (X11; Linux x86_64)'
+    'Mozilla/5.0 (X11; Linux x86_64)',
+    'Mozilla/5.0 (Windows NT 11.0; Win64; x64)',
+    'Mozilla/5.0 (X11; Ubuntu; Linux x86_64)'
   ]
   const rand = Math.floor(Math.random() * base.length)
   const version = Math.floor(Math.random() * 30 + 60)
@@ -51,9 +63,7 @@ async function simulateAttack() {
 
     await page.setUserAgent(randomUA())
     await page.setExtraHTTPHeaders({ 'Accept-Language': randomLang() })
-
     await page.emulateTimezone(randomTimezone())
-
     await page.setViewport({
       width: 1024 + Math.floor(Math.random() * 200),
       height: 768 + Math.floor(Math.random() * 200),
@@ -90,7 +100,6 @@ async function simulateAttack() {
       page.click('button[type=submit]')
     ])
 
-    // Captura mensaje visible
     let mensaje = '(sin mensaje detectado)'
     try {
       await page.waitForSelector('#resultado', { timeout: 5000 })
@@ -108,7 +117,6 @@ async function simulateAttack() {
     await browser.close()
   }
 
-  // Análisis final del fingerprinting
   console.log('\n' + '='.repeat(60))
   console.log('📊 ANÁLISIS DE FINGERPRINTING')
   console.log('='.repeat(60))
@@ -119,17 +127,12 @@ async function simulateAttack() {
   if (uniqueVisitorIds === 1) {
     console.log('🎯 ¡ÉXITO DEFENSIVO! El fingerprinting es robusto')
     console.log('🛡️  Todas las requests tienen el mismo visitorId')
-    console.log('⚠️  Los atacantes NO pueden adulterar su huella digital')
-    console.log(`📋 Requests enviados: ${totalRequests}`)
-    console.log(`🔒 Unique visitorIds: ${uniqueVisitorIds}`)
   } else {
     console.log('⚠️  VULNERABILIDAD DETECTADA!')
     console.log('🔓 El atacante logró generar múltiples fingerprints')
     console.log(
       '💥 El sistema puede ser bypasseado con rotación de user agents'
     )
-    console.log(`📋 Requests enviados: ${totalRequests}`)
-    console.log(`🆔 Unique visitorIds: ${uniqueVisitorIds}`)
     console.log(
       `📈 Tasa de evasión: ${((uniqueVisitorIds / totalRequests) * 100).toFixed(
         1
@@ -137,6 +140,8 @@ async function simulateAttack() {
     )
   }
 
+  console.log(`📋 Requests enviados: ${totalRequests}`)
+  console.log(`🆔 Unique visitorIds: ${uniqueVisitorIds}`)
   console.log('='.repeat(60) + '\n')
 }
 
