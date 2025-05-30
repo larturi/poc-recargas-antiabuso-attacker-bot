@@ -9,7 +9,6 @@ puppeteer.use(AnonymizeUA())
 const TARGET_URL = 'http://localhost:3001/phone'
 const NUM_REQUESTS = 10
 
-// Array para trackear los visitorIds
 const visitorIds = new Set()
 
 function randomLang() {
@@ -27,6 +26,22 @@ function randomUA() {
   return `${base[rand]} AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${version}.0.0.0 Safari/537.36`
 }
 
+function randomTimezone() {
+  const timezones = [
+    'America/New_York',
+    'Europe/Berlin',
+    'Asia/Tokyo',
+    'America/Los_Angeles',
+    'Europe/London',
+    'Australia/Sydney',
+    'America/Chicago',
+    'Asia/Shanghai',
+    'Europe/Paris',
+    'America/Sao_Paulo'
+  ]
+  return timezones[Math.floor(Math.random() * timezones.length)]
+}
+
 async function simulateAttack() {
   console.log('🚀 Iniciando ataque simulado...\n')
 
@@ -34,13 +49,11 @@ async function simulateAttack() {
     const browser = await puppeteer.launch({ headless: 'new' })
     const page = await browser.newPage()
 
-    // Rotamos fingerprinting real
     await page.setUserAgent(randomUA())
     await page.setExtraHTTPHeaders({ 'Accept-Language': randomLang() })
 
-    await page.emulateTimezone(
-      Math.random() > 0.5 ? 'America/New_York' : 'Europe/Berlin'
-    )
+    await page.emulateTimezone(randomTimezone())
+
     await page.setViewport({
       width: 1024 + Math.floor(Math.random() * 200),
       height: 768 + Math.floor(Math.random() * 200),
@@ -50,16 +63,14 @@ async function simulateAttack() {
       isLandscape: Math.random() > 0.5
     })
 
-    // Capturar request al backend
+    let currentVisitorId = null
     page.on('request', async (req) => {
       if (req.url().includes('/api/validar-linea') && req.method() === 'POST') {
         const postData = req.postData()
         try {
           const parsed = JSON.parse(postData)
           visitorIds.add(parsed.visitorId)
-          console.log(
-            `[#${i + 1}] visitorId=${parsed.visitorId} → ${parsed.numeroLinea}`
-          )
+          currentVisitorId = parsed.visitorId
         } catch (e) {
           console.log(`[#${i + 1}] Error al parsear POST`)
         }
@@ -78,6 +89,21 @@ async function simulateAttack() {
       }),
       page.click('button[type=submit]')
     ])
+
+    // Captura mensaje visible
+    let mensaje = '(sin mensaje detectado)'
+    try {
+      await page.waitForSelector('#resultado', { timeout: 5000 })
+      mensaje = await page.$eval('#resultado', (el) => el.innerText.trim())
+    } catch (err) {
+      mensaje = '(no se detectó mensaje visible)'
+    }
+
+    console.log(
+      `[#${i + 1}] visitorId=${
+        currentVisitorId || '-'
+      } → ${numeroLinea} → ${mensaje}`
+    )
 
     await browser.close()
   }
@@ -99,14 +125,15 @@ async function simulateAttack() {
   } else {
     console.log('⚠️  VULNERABILIDAD DETECTADA!')
     console.log('🔓 El atacante logró generar múltiples fingerprints')
-    console.log('💥 El sistema puede ser bypasseado con rotación de user agents')
+    console.log(
+      '💥 El sistema puede ser bypasseado con rotación de user agents'
+    )
     console.log(`📋 Requests enviados: ${totalRequests}`)
     console.log(`🆔 Unique visitorIds: ${uniqueVisitorIds}`)
     console.log(
-      `📈 Tasa de evasión: ${(
-        (uniqueVisitorIds / totalRequests) *
-        100
-      ).toFixed(1)}%`
+      `📈 Tasa de evasión: ${((uniqueVisitorIds / totalRequests) * 100).toFixed(
+        1
+      )}%`
     )
   }
 
