@@ -1,41 +1,134 @@
-# FingerprintJS Rate Limit Bypass – Attack PoC
+# 🤖 Bot de Ataque Anti-Fingerprinting
 
-Este script es una prueba de concepto de ataque (PoC) contra un sistema de rate limiting basado en visitorId generado con FingerprintJS desde el frontend.
+Bot automatizado para probar la robustez de sistemas de rate limiting basados en fingerprinting digital. Simula ataques sofisticados con múltiples técnicas de evasión.
 
-## 🚀 ¿Qué hace este script?
+## 🎯 Objetivo
 
-- Lanza múltiples navegadores headless simulando usuarios reales con Puppeteer.
+Evaluar la efectividad de sistemas de detección de abuso que utilizan **FingerprintJS** u otras técnicas de fingerprinting del navegador para identificar usuarios únicos.
 
-- Utiliza plugins de evasión avanzada (puppeteer-extra-plugin-stealth y anonymize-ua) para eludir técnicas comunes de fingerprinting.
+## 🛠️ Características del Bot
 
-- Rota propiedades clave del navegador (User-Agent, idioma, zona horaria, resolución de pantalla, etc.) en cada ejecución.
+### 🔧 Técnicas de Evasión Implementadas
 
-- Permite que el frontend genere el visitorId naturalmente usando FingerprintJS.
+#### 1. **Rotación de User Agents**
 
-- Intercepta los requests salientes al backend (/api/validar-linea) y extrae los visitorId enviados.
+- 7 diferentes combinaciones de OS/navegador
+- Versiones aleatorias de Chrome (90-120)
+- Patrones realistas para Windows, macOS y Linux
 
-- Registra en consola los visitorId generados y los números de línea enviados, permitiendo detectar si se está evadiendo el rate limit.
+#### 2. **Randomización de Headers HTTP**
 
-## 📦 Requisitos
+- 12 idiomas diferentes (`Accept-Language`)
+- Rotación automática entre locales comunes
 
-- Node.js 16+
+#### 3. **Variación de Zonas Horarias**
 
-## Correr el script
+- 12 zonas horarias globales
+- Desde América hasta Asia-Pacífico
+
+#### 4. **Propiedades del Navegador**
+
+- `navigator.platform` dinámico
+- `navigator.hardwareConcurrency` (2-24 cores)
+- `navigator.deviceMemory` (2-32 GB)
+- `screen.colorDepth` y `pixelDepth` variables
+
+#### 5. **Viewport Dinámico**
+
+- Resoluciones entre 1024x768 y 1920x1080
+- `deviceScaleFactor` aleatorio (1, 1.5, 2)
+- Orientación landscape/portrait variable
+
+#### 6. **Comportamiento Humano**
+
+- Delays aleatorios entre acciones (50-100ms)
+- Tiempos de espera variables entre requests
+- Simulación de typing natural
+
+## 📊 Métricas de Evaluación
+
+El bot mide la efectividad del fingerprinting con:
+
+- **🎯 Éxito Defensivo**: Todos los requests tienen el mismo `visitorId`
+- **⚠️ Vulnerabilidad Parcial**: Múltiples `visitorId` generados
+- **🎉 Éxito Total de Evasión**: Cada request genera un `visitorId` único
+
+## 🚀 Uso
 
 ```bash
-npm install
+# Instalar dependencias
+npm install puppeteer-extra puppeteer-extra-plugin-stealth puppeteer-extra-plugin-anonymize-ua
 
+# Ejecutar ataque
 node attack.js
 ```
 
-## 🧠 Resultado esperado
+## 📋 Configuración
 
-Si el ataque es exitoso, verás múltiples visitorId distintos en consola:
-
-```bash
-[#1] visitorId=a9b8c7... → 1134567890
-[#2] visitorId=4e5f6d... → 1176543210
-...
+```javascript
+const TARGET_URL = 'http://localhost:3001/phone'  // URL objetivo
+const NUM_REQUESTS = 10                           // Número de requests
 ```
 
-Esto confirma que el sistema de rate limiting por visitorId puede ser evadido, y que el fingerprint no es confiable por sí solo como identificador antifraude.
+## 📈 Salida del Bot
+
+```
+🚀 Iniciando ataque simulado...
+
+[#1] visitorId=a19e5a74a32ee27b → 1124719404 → No pudimos procesar tu solicitud
+[#2] visitorId=b96742ef0e8db414 → 1162359558 → Error de validación
+[#3] visitorId=c45821df3a21bc89 → 1198765432 → Límite excedido
+
+=============================================================
+📊 ANÁLISIS DE FINGERPRINTING
+=============================================================
+🎉🎯 ¡ÉXITO TOTAL DE EVASIÓN! Fingerprinting superado.
+🛡️  Cada request generó un visitorId único.
+💯 Tasa de evasión: 100.0%
+📋 Requests enviados: 10
+🆔 Unique visitorIds: 10
+=============================================================
+```
+
+## 🛡️ Contramedidas Recomendadas
+
+### Para Defensores
+
+1. **Rate Limiting por IP** como respaldo
+2. **Análisis de patrones de comportamiento**
+3. **Detección de automatización** (velocidad, patrones)
+4. **Fingerprinting del lado servidor** (TLS, timing)
+5. **Machine Learning** para detectar bots sofisticados
+
+### Técnicas Avanzadas
+
+- **Canvas fingerprinting** más robusto
+- **Audio context fingerprinting**
+- **WebGL fingerprinting**
+- **Análisis de eventos del mouse/teclado**
+
+## ⚠️ Uso Ético
+
+Este bot está diseñado para:
+
+- ✅ Pruebas de penetración autorizadas
+- ✅ Evaluación de sistemas propios
+- ✅ Investigación de seguridad
+
+**NO debe usarse para**:
+
+- ❌ Ataques no autorizados
+- ❌ Evasión maliciosa de rate limits
+- ❌ Actividades ilegales
+
+## 🔍 Plugins Utilizados
+
+- **`puppeteer-extra-plugin-stealth`**: Evasión de detección de automatización
+- **`puppeteer-extra-plugin-anonymize-ua`**: Randomización adicional de UA
+
+## 📚 Casos de Uso
+
+1. **Auditorías de Seguridad**: Evaluar robustez de rate limiting
+2. **Red Team Exercises**: Simular ataques sofisticados
+3. **Desarrollo**: Probar contramedidas anti-bot
+4. **Investigación**: Estudiar técnicas de fingerprinting
